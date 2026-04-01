@@ -8,37 +8,42 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.foodapp.data.RecipeViewModel
+import com.example.foodapp.data.UiState
 
 data class Recipe(val id: String, val name: String)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(onRecipeClick: (String) -> Unit) {
+    // In a real app, use viewModel() from lifecycle-viewmodel-compose
+    val viewModel = remember { RecipeViewModel() }
 
-    // Dummy data (replace with ViewModel later)
-    val recipes = remember {
-        listOf(
-            Recipe("1", "Pizza"),
-            Recipe("2", "Pasta"),
-            Recipe("3", "Burger")
-        )
+    LaunchedEffect(Unit) {
+        viewModel.fetchMeals()
     }
 
-    Scaffold (
-        topBar = {
-            TopAppBar(title = { Text("Food Finder") })
-        }
-    ){ padding ->
-
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            items(recipes) { recipe ->
-                RecipeItem(recipe, onRecipeClick)
+    when (val state = viewModel.uiState) {
+        is UiState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                CircularProgressIndicator()
             }
         }
+
+        is UiState.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Text("Error: ${state.message}")
+            }
+        }
+
+        is UiState.Success ->
+            LazyColumn {
+                items(state.data) { meal ->
+                    RecipeItem(
+                        recipe = Recipe(meal.idMeal, meal.strMeal),
+                        onClick = onRecipeClick
+                    )
+                }
+            }
     }
 }
 

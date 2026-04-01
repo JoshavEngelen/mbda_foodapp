@@ -25,6 +25,8 @@ replay_pid*
 
 # Kotlin Gradle plugin data, see https://kotlinlang.org/docs/whatsnew20.html#new-directory-for-kotlin-data-in-gradle-projects
 .kotlin/
+.gradle/
+.idea/
 
-# Ignore the build file in /app
+# Ignore the build folder in /app
 /app/build/

@@ -13,6 +13,7 @@ import com.example.foodapp.data.UiState
 
 data class Recipe(val id: String, val name: String)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(onRecipeClick: (String) -> Unit) {
     // In a real app, use viewModel() from lifecycle-viewmodel-compose
@@ -22,28 +23,44 @@ fun HomeScreen(onRecipeClick: (String) -> Unit) {
         viewModel.fetchMeals()
     }
 
-    when (val state = viewModel.uiState) {
-        is UiState.Loading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                CircularProgressIndicator()
-            }
+    Scaffold (
+        topBar = {
+            TopAppBar(title = { Text("FoodApp") })
         }
-
-        is UiState.Error -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                Text("Error: ${state.message}")
-            }
-        }
-
-        is UiState.Success ->
-            LazyColumn {
-                items(state.data) { meal ->
-                    RecipeItem(
-                        recipe = Recipe(meal.idMeal, meal.strMeal),
-                        onClick = onRecipeClick
-                    )
+    ) { padding ->
+        when (val state = viewModel.uiState) {
+            is UiState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
+
+            is UiState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    Text("Error: ${state.message}")
+                }
+            }
+
+            is UiState.Success ->
+                LazyColumn (
+                    modifier = Modifier
+                        .padding(padding)
+                        .fillMaxSize()
+                ) {
+                    items(state.data) { meal ->
+                        RecipeItem(
+                            recipe = Recipe(meal.idMeal, meal.strMeal),
+                            onClick = onRecipeClick
+                        )
+                    }
+                }
+        }
     }
 }
 

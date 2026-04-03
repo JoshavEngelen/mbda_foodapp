@@ -2,6 +2,8 @@ package com.example.foodapp
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,13 +12,23 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(recipeId: String) {
+fun DetailScreen(recipeId: String, onBackClick: () -> Unit) {
 
     val context = LocalContext.current
 
     Scaffold (
         topBar = {
-            TopAppBar(title = { Text("Recipe Detail") })
+            TopAppBar(
+                title = { Text("Recipe Detail") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
         }
     ){ padding ->
 

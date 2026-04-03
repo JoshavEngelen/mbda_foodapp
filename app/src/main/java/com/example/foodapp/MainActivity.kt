@@ -52,7 +52,10 @@ fun FoodApp() {
 
         composable("detail/{recipeId}") { backStackEntry ->
             val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
-            DetailScreen(recipeId)
+            DetailScreen(
+                recipeId = recipeId,
+                onBackClick = { navController.popBackStack() }
+            )
         }
     }
 }

@@ -19,11 +19,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.foodapp.data.FavoritesManager
+import com.example.foodapp.data.RecipeViewModel
+import com.example.foodapp.data.UiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(recipeId: String, onBackClick: () -> Unit) {
+fun DetailScreen(recipeId: String, viewModel: RecipeViewModel, onBackClick: () -> Unit) {
+    val state = viewModel.uiState
+
+    val meal = (state as? UiState.Success)
+        ?.data
+        ?.find { it.id == recipeId }
+
+    var editMode by remember { mutableStateOf(false) }
+
+    var name by remember { mutableStateOf(meal?.name ?: "") }
+    var instructions by remember { mutableStateOf(meal?.instructions ?: "") }
 
     val context = LocalContext.current
     val favoritesManager = remember { FavoritesManager(context) }
@@ -70,58 +83,95 @@ fun DetailScreen(recipeId: String, onBackClick: () -> Unit) {
                 .fillMaxSize()
         ) {
 
-            Text(text = "Recipe ID: $recipeId")
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = {
-                if (isFavorite) {
-                    favoritesManager.removeFavorite(recipeId)
-                } else {
-                    favoritesManager.addFavorite(recipeId)
-                }
-                isFavorite = !isFavorite
-            }) {
-                Text(if (isFavorite) "Remove Favorite" else "Save Favorite")
+            if (meal == null) {
+                Text("Loading...")
+                return@Column
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            if (editMode) {
 
-            Button(onClick = {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "Check this recipe: $recipeId")
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Naam") }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = instructions,
+                    onValueChange = { instructions = it },
+                    label = { Text("Instructies") }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(onClick = {
+                    viewModel.saveEdit(recipeId, name, instructions)
+                    editMode = false
+                }) {
+                    Text("Opslaan")
                 }
-                context.startActivity(Intent.createChooser(intent, "Share"))
-            }) {
-                Text("Share Recipe")
+
             }
+            else {
+                Text(text = meal.name, style = MaterialTheme.typography.headlineSmall)
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Button(onClick = {
-                when {
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.CAMERA
-                    ) == PackageManager.PERMISSION_GRANTED -> {
-                        cameraLauncher.launch(null)
+                Text(text = meal.instructions)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(onClick = {
+                    editMode = true
+                }) {
+                    Text("Bewerken")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(onClick = {
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, "Check this recipe: $recipeId")
                     }
-
-                    else -> {
-                        permissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
+                    context.startActivity(Intent.createChooser(intent, "Share"))
+                }) {
+                    Text("Share Recipe")
                 }
-            }) {
-                Text("Take Photo")
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Button(onClick = {
-                // Placeholder for saving favorite
-            }) {
-                Text("Save Favorite")
+                Button(onClick = {
+                    when {
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) == PackageManager.PERMISSION_GRANTED -> {
+                            cameraLauncher.launch(null)
+                        }
+
+                        else -> {
+                            permissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
+                }) {
+                    Text("Take Photo")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(onClick = {
+                    if (isFavorite) {
+                        favoritesManager.removeFavorite(recipeId)
+                    } else {
+                        favoritesManager.addFavorite(recipeId)
+                    }
+                    isFavorite = !isFavorite
+                }) {
+                    Text(if (isFavorite) "Remove Favorite" else "Save Favorite")
+                }
             }
         }
     }

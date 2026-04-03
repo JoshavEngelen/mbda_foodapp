@@ -7,7 +7,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodapp.api.ApiService
-import com.example.foodapp.api.Meal
 import com.example.foodapp.api.MealUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +22,8 @@ class RecipeViewModel(context: Context) : ViewModel() {
 
     private val repository = RecipeRepository(
         apiService = ApiService(),
-        favoritesManager = FavoritesManager(context)
+        favoritesManager = FavoritesManager(context),
+        editMealManager = EditMealManager(context)
     )
 
     var uiState: UiState by mutableStateOf(UiState.Loading)
@@ -42,9 +42,10 @@ class RecipeViewModel(context: Context) : ViewModel() {
 
                 val mappedMeals = meals.map {
                     MealUi(
-                        id = it.idMeal,
-                        name = it.strMeal,
-                        isFavorite = favorites.contains(it.idMeal)
+                        id = it.id,
+                        name = it.name,
+                        instructions = it.instructions,
+                        isFavorite = favorites.contains(it.id)
                     )
                 }
 
@@ -54,6 +55,11 @@ class RecipeViewModel(context: Context) : ViewModel() {
                 uiState = UiState.Error("Fout bij ophalen data")
             }
         }
+    }
+
+    fun saveEdit(mealId: String, name: String, instructions: String) {
+        repository.saveEdit(mealId, name, instructions)
+        fetchMeals()
     }
 
     fun toggleFavorite(mealId: String) {

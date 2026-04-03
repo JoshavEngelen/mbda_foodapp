@@ -5,9 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.foodapp.data.RecipeViewModel
 import com.example.foodapp.ui.theme.FoodAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -25,10 +30,21 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun FoodApp() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    
+    // Create the ViewModel at this level so it's shared between screens
+    val recipeViewModel: RecipeViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return RecipeViewModel(context) as T
+            }
+        }
+    )
 
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
+                viewModel = recipeViewModel,
                 onRecipeClick = { recipeId ->
                     navController.navigate("detail/$recipeId")
                 }
@@ -39,6 +55,7 @@ fun FoodApp() {
             val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
             DetailScreen(
                 recipeId = recipeId,
+                viewModel = recipeViewModel,
                 onBackClick = { navController.popBackStack() }
             )
         }

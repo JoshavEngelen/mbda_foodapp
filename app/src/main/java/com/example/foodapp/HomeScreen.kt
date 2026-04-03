@@ -7,9 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.foodapp.data.FavoritesManager
 import com.example.foodapp.data.RecipeViewModel
 import com.example.foodapp.data.UiState
 
@@ -17,11 +15,7 @@ data class Recipe(val id: String, val name: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onRecipeClick: (String) -> Unit) {
-    // In a real app, use viewModel() from lifecycle-viewmodel-compose
-    val context = LocalContext.current
-    val viewModel = remember { RecipeViewModel(context) }
-
+fun HomeScreen(viewModel: RecipeViewModel, onRecipeClick: (String) -> Unit) {
     LaunchedEffect(Unit) {
         viewModel.fetchMeals()
     }

@@ -6,3 +6,9 @@ data class Meal(
     val strInstructions: String,
     val strMealThumb: String
 )
+
+data class MealUi(
+    val id: String,
+    val name: String,
+    val isFavorite: Boolean
+)

@@ -1,41 +1,63 @@
 package com.example.foodapp.data
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.foodapp.api.ApiService
 import com.example.foodapp.api.Meal
+import com.example.foodapp.api.MealUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 sealed class UiState {
     object Loading : UiState()
-    data class Success(val data: List<Meal>) : UiState()
+    data class Success(val data: List<MealUi>) : UiState()
     data class Error(val message: String) : UiState()
 }
 
-class RecipeViewModel : ViewModel() {
+class RecipeViewModel(context: Context) : ViewModel() {
 
-    private val repository = RecipeRepository()
+    private val repository = RecipeRepository(
+        apiService = ApiService(),
+        favoritesManager = FavoritesManager(context)
+    )
 
     var uiState: UiState by mutableStateOf(UiState.Loading)
         private set
 
     fun fetchMeals() {
-        uiState = UiState.Loading
-
         viewModelScope.launch {
+            uiState = UiState.Loading
+
             try {
                 val meals = withContext(Dispatchers.IO) {
                     repository.getMeals()
                 }
 
-                uiState = UiState.Success(meals)
+                val favorites = repository.getFavorites()
+
+                val mappedMeals = meals.map {
+                    MealUi(
+                        id = it.idMeal,
+                        name = it.strMeal,
+                        isFavorite = favorites.contains(it.idMeal)
+                    )
+                }
+
+                uiState = UiState.Success(mappedMeals)
+
             } catch (e: Exception) {
-                uiState = UiState.Error("Fout bij ophalen data: ${e.localizedMessage}")
+                uiState = UiState.Error("Fout bij ophalen data")
             }
         }
+    }
+
+    fun toggleFavorite(mealId: String) {
+        repository.toggleFavorite(mealId)
+        fetchMeals()
     }
 }

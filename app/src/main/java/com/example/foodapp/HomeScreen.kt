@@ -19,10 +19,8 @@ data class Recipe(val id: String, val name: String)
 @Composable
 fun HomeScreen(onRecipeClick: (String) -> Unit) {
     // In a real app, use viewModel() from lifecycle-viewmodel-compose
-    val viewModel = remember { RecipeViewModel() }
-
     val context = LocalContext.current
-    val favoritesManager = remember { FavoritesManager(context) }
+    val viewModel = remember { RecipeViewModel(context) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchMeals()
@@ -59,14 +57,21 @@ fun HomeScreen(onRecipeClick: (String) -> Unit) {
                         .fillMaxSize()
                 ) {
                     items(state.data) { meal ->
-                        val isFav = favoritesManager.isFavorite(meal.idMeal)
-                        RecipeItem(
-                            recipe = Recipe(
-                                meal.idMeal,
-                                if (isFav) "⭐ ${meal.strMeal}" else meal.strMeal
-                            ),
-                            onClick = onRecipeClick
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onRecipeClick(meal.id) }
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(meal.name)
+
+                            Button(onClick = {
+                                viewModel.toggleFavorite(meal.id)
+                            }) {
+                                Text(if (meal.isFavorite) "★" else "☆")
+                            }
+                        }
                     }
                 }
         }

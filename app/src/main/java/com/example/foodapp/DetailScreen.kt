@@ -6,15 +6,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.foodapp.data.FavoritesManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(recipeId: String, onBackClick: () -> Unit) {
 
     val context = LocalContext.current
+    val favoritesManager = remember { FavoritesManager(context) }
+
+    var isFavorite by remember {
+        mutableStateOf(favoritesManager.isFavorite(recipeId))
+    }
 
     Scaffold (
         topBar = {
@@ -40,6 +50,19 @@ fun DetailScreen(recipeId: String, onBackClick: () -> Unit) {
         ) {
 
             Text(text = "Recipe ID: $recipeId")
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(onClick = {
+                if (isFavorite) {
+                    favoritesManager.removeFavorite(recipeId)
+                } else {
+                    favoritesManager.addFavorite(recipeId)
+                }
+                isFavorite = !isFavorite
+            }) {
+                Text(if (isFavorite) "Remove Favorite" else "Save Favorite")
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 

@@ -7,7 +7,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.foodapp.data.FavoritesManager
 import com.example.foodapp.data.RecipeViewModel
 import com.example.foodapp.data.UiState
 
@@ -18,6 +20,9 @@ data class Recipe(val id: String, val name: String)
 fun HomeScreen(onRecipeClick: (String) -> Unit) {
     // In a real app, use viewModel() from lifecycle-viewmodel-compose
     val viewModel = remember { RecipeViewModel() }
+
+    val context = LocalContext.current
+    val favoritesManager = remember { FavoritesManager(context) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchMeals()
@@ -54,8 +59,12 @@ fun HomeScreen(onRecipeClick: (String) -> Unit) {
                         .fillMaxSize()
                 ) {
                     items(state.data) { meal ->
+                        val isFav = favoritesManager.isFavorite(meal.idMeal)
                         RecipeItem(
-                            recipe = Recipe(meal.idMeal, meal.strMeal),
+                            recipe = Recipe(
+                                meal.idMeal,
+                                if (isFav) "⭐ ${meal.strMeal}" else meal.strMeal
+                            ),
                             onClick = onRecipeClick
                         )
                     }

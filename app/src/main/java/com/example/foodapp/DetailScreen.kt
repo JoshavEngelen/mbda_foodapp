@@ -1,6 +1,11 @@
 package com.example.foodapp
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -13,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.example.foodapp.data.FavoritesManager
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,9 +27,24 @@ fun DetailScreen(recipeId: String, onBackClick: () -> Unit) {
 
     val context = LocalContext.current
     val favoritesManager = remember { FavoritesManager(context) }
+    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     var isFavorite by remember {
         mutableStateOf(favoritesManager.isFavorite(recipeId))
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap ->
+        imageBitmap = bitmap
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            cameraLauncher.launch(null)
+        }
     }
 
     Scaffold (
@@ -79,9 +100,20 @@ fun DetailScreen(recipeId: String, onBackClick: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(onClick = {
-                // Placeholder for camera feature
+                when {
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED -> {
+                        cameraLauncher.launch(null)
+                    }
+
+                    else -> {
+                        permissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                }
             }) {
-                Text("Take Photo (Camera)")
+                Text("Take Photo")
             }
 
             Spacer(modifier = Modifier.height(8.dp))

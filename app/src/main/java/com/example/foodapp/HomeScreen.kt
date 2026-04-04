@@ -16,9 +16,6 @@ import com.example.foodapp.data.UiState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(mealListViewModel: MealListViewModel, onRecipeClick: (String) -> Unit) {
-    LaunchedEffect(Unit) {
-        mealListViewModel.fetchMeals()
-    }
 
     Scaffold (
         topBar = {

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -19,6 +21,7 @@ import androidx.core.content.ContextCompat
 import com.example.foodapp.api.MealUi
 import com.example.foodapp.data.DetailUiState
 import com.example.foodapp.data.DetailViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +93,7 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
 
 @Composable
 fun EditView(viewModel: DetailViewModel) {
+    val scope = rememberCoroutineScope()
     OutlinedTextField(
         value = viewModel.editName,
         onValueChange = { viewModel.editName = it },
@@ -105,7 +109,13 @@ fun EditView(viewModel: DetailViewModel) {
     )
     Spacer(Modifier.height(16.dp))
     Row {
-        Button(onClick = { viewModel.saveChanges() }) { Text("Save") }
+        Button(onClick = {
+            scope.launch {
+                viewModel.saveChanges()
+            }
+        }) {
+            Text("Save")
+        }
         Spacer(Modifier.width(8.dp))
         OutlinedButton(onClick = { viewModel.cancelEditing() }) { Text("Cancel") }
     }

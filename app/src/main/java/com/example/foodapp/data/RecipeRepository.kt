@@ -2,7 +2,9 @@ package com.example.foodapp.data
 
 import com.example.foodapp.api.ApiService
 import com.example.foodapp.api.MealUi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 
 class RecipeRepository(
     private val apiService: ApiService,
@@ -11,12 +13,11 @@ class RecipeRepository(
 ) {
     val favoritesFlow: StateFlow<Set<String>> = FavoritesManager.favoritesFlow
 
-    fun getMeals(): List<MealUi> {
+    suspend fun getMeals(): List<MealUi> = withContext(Dispatchers.IO) {
         val meals = apiService.fetchMeals()
         val favorites = favoritesManager.getFavorites()
 
-        return meals.map { meal ->
-
+        meals.map { meal ->
             val editedName = editMealManager.getEditedName(meal.idMeal)
             val editedInstructions = editMealManager.getEditedInstructions(meal.idMeal)
 
@@ -29,7 +30,7 @@ class RecipeRepository(
         }
     }
 
-    fun saveEdit(id: String, name: String, instructions: String) {
+    suspend fun saveEdit(id: String, name: String, instructions: String) = withContext(Dispatchers.IO) {
         editMealManager.saveEdit(id, name, instructions)
     }
 

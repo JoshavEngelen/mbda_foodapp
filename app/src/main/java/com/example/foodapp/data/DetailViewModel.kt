@@ -1,6 +1,5 @@
 package com.example.foodapp.data
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,7 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.foodapp.api.ApiService
+import com.example.foodapp.FoodApplication
 import com.example.foodapp.api.MealUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,14 +24,8 @@ sealed class DetailUiState {
 
 class DetailViewModel(
     private val recipeId: String,
-    context: Context
+    private val repository: RecipeRepository
 ) : ViewModel() {
-
-    private val repository = RecipeRepository(
-        apiService = ApiService(),
-        favoritesManager = FavoritesManager(context),
-        editMealManager = EditMealManager(context)
-    )
 
     private val mealFlow = MutableStateFlow<MealUi?>(null)
 
@@ -86,7 +79,7 @@ class DetailViewModel(
         isEditing = false
     }
 
-    fun saveChanges() {
+    suspend fun saveChanges() {
         repository.saveEdit(recipeId, editName, editInstructions)
         isEditing = false
         loadMeal()
@@ -97,9 +90,9 @@ class DetailViewModel(
     }
 
     companion object {
-        fun provideFactory(recipeId: String, context: Context): ViewModelProvider.Factory = viewModelFactory {
+        fun provideFactory(recipeId: String, application: FoodApplication): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                DetailViewModel(recipeId, context)
+                DetailViewModel(recipeId, application.recipeRepository)
             }
         }
     }

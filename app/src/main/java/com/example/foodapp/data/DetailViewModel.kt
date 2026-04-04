@@ -1,9 +1,9 @@
 package com.example.foodapp.data
 
-import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -37,35 +37,42 @@ class DetailViewModel(
 
     var editName by mutableStateOf("")
     var editInstructions by mutableStateOf("")
+    var editImageUri: String? by mutableStateOf(null)
 
     init {
         viewModelScope.launch {
             combine(mealFlow, repository.favoritesFlow) { meal, favorites ->
-                meal?.copy(isFavorite = favorites.contains(meal.id))
+                meal?.copy(isFavorite = favorites.contains(meal?.id))
             }.collect { updatedMeal ->
                 if (updatedMeal != null) {
                     uiState = DetailUiState.Success(updatedMeal)
                 }
             }
         }
+
+        viewModelScope.launch {
+            repository.editsChanged.collect {
+                loadMeal()
+            }
+        }
+
         loadMeal()
     }
 
     fun loadMeal() {
         viewModelScope.launch {
-            if (uiState !is DetailUiState.Success) {
-                uiState = DetailUiState.Loading
-            }
             try {
                 val meals = withContext(Dispatchers.IO) { repository.getMeals() }
                 val meal = meals.find { it.id == recipeId }
                 if (meal != null) {
                     mealFlow.value = meal
-                } else {
+                } else if (uiState is DetailUiState.Loading) {
                     uiState = DetailUiState.Error("Recipe not found")
                 }
             } catch (e: Exception) {
-                uiState = DetailUiState.Error("Failed to load recipe")
+                if (uiState is DetailUiState.Loading) {
+                    uiState = DetailUiState.Error("Failed to load recipe")
+                }
             }
         }
     }
@@ -73,6 +80,7 @@ class DetailViewModel(
     fun startEditing(meal: MealUi) {
         editName = meal.name
         editInstructions = meal.instructions
+        editImageUri = meal.imageUri
         isEditing = true
     }
 
@@ -81,18 +89,14 @@ class DetailViewModel(
     }
 
     suspend fun saveChanges() {
-        repository.saveEdit(recipeId, editName, editInstructions)
-        mealFlow.value = mealFlow.value?.copy(name = editName, instructions = editInstructions)
+        val uri = editImageUri?.toUri()
+        repository.saveEdit(recipeId, editName, editInstructions, uri)
         isEditing = false
+        // The repository.editsChanged flow will trigger loadMeal() automatically
     }
 
     fun toggleFavorite() {
         repository.toggleFavorite(recipeId)
-    }
-
-    fun saveImage(uri: Uri) {
-        repository.saveImage(recipeId, uri)
-        mealFlow.value = mealFlow.value?.copy(imageUri = uri.toString())
     }
 
     companion object {

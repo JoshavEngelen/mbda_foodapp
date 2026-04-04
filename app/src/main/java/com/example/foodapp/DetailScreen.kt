@@ -7,7 +7,9 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -43,18 +45,28 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
 
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
         bitmap?.let {
-            val uri = saveBitmapToUri(context, it, "recipe_photo_${System.currentTimeMillis()}.jpg")
-            viewModel.saveImage(uri)
+            val uri = saveBitmapToInternal(context, it)
+            if (uri != null) {
+                viewModel.editImageUri = uri.toString()
+            }
         }
     }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) cameraLauncher.launch(null)
     }
+    
+    // Using modern PickVisualMedia for better reliability
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         uri?.let {
-            viewModel.saveImage(it)
+            val internalUri = copyUriToInternal(context, it)
+            if (internalUri != null) {
+                viewModel.editImageUri = internalUri.toString()
+            } else {
+                // Fallback to original URI if copy fails, though not ideal for persistence
+                viewModel.editImageUri = it.toString()
+            }
         }
     }
 
@@ -87,7 +99,19 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
                 is DetailUiState.Success -> {
                     val meal = uiState.meal
                     if (viewModel.isEditing) {
-                        EditView(viewModel)
+                        EditView(
+                            viewModel,
+                            onTakePhoto = {
+                                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                                    cameraLauncher.launch(null)
+                                } else {
+                                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                                }
+                            },
+                            onPickPhoto = {
+                                imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
+                        )
                     } else {
                         DisplayView(
                             meal = meal,
@@ -99,16 +123,6 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
                                 }
                                 context.startActivity(Intent.createChooser(intent, "Share"))
                             },
-                            onTakePhoto = {
-                                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                                    cameraLauncher.launch(null)
-                                } else {
-                                    permissionLauncher.launch(Manifest.permission.CAMERA)
-                                }
-                            },
-                            onPickPhoto = {
-                                imagePickerLauncher.launch("image/*")
-                            },
                             onFavorite = { viewModel.toggleFavorite() }
                         )
                     }
@@ -118,17 +132,68 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
     }
 }
 
-private fun saveBitmapToUri(context: Context, bitmap: Bitmap, fileName: String): Uri {
-    val file = File(context.cacheDir, fileName)
-    FileOutputStream(file).use { out ->
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+private fun saveBitmapToInternal(context: Context, bitmap: Bitmap): Uri? {
+    val dir = File(context.filesDir, "photos").apply { if (!exists()) mkdirs() }
+    val fileName = "recipe_photo_${System.currentTimeMillis()}.jpg"
+    val file = File(dir, fileName)
+    return try {
+        FileOutputStream(file).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+        }
+        file.toUri()
+    } catch (e: Exception) {
+        Log.e("DetailScreen", "Error saving bitmap", e)
+        null
     }
-    return file.toUri()
+}
+
+private fun copyUriToInternal(context: Context, uri: Uri): Uri? {
+    val dir = File(context.filesDir, "photos").apply { if (!exists()) mkdirs() }
+    val fileName = "recipe_photo_${System.currentTimeMillis()}.jpg"
+    val file = File(dir, fileName)
+    return try {
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            FileOutputStream(file).use { output ->
+                input.copyTo(output)
+            }
+        }
+        file.toUri()
+    } catch (e: Exception) {
+        Log.e("DetailScreen", "Error copying URI: $uri", e)
+        null
+    }
 }
 
 @Composable
-fun EditView(viewModel: DetailViewModel) {
+fun EditView(
+    viewModel: DetailViewModel,
+    onTakePhoto: () -> Unit,
+    onPickPhoto: () -> Unit
+) {
     val scope = rememberCoroutineScope()
+
+    RecipeImageHeader(viewModel.editImageUri)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedButton(
+            onClick = onTakePhoto,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Take Photo")
+        }
+        OutlinedButton(
+            onClick = onPickPhoto,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Select Photo")
+        }
+    }
+
     OutlinedTextField(
         value = viewModel.editName,
         onValueChange = { viewModel.editName = it },
@@ -158,18 +223,27 @@ fun EditView(viewModel: DetailViewModel) {
 
 @Composable
 fun RecipeImageHeader(
-    uriString: String?,
-    onTakePhoto: () -> Unit,
-    onPickPhoto: () -> Unit
+    uriString: String?
 ) {
     val context = LocalContext.current
     val bitmap = remember(uriString) {
-        if (uriString == null) null
+        if (uriString.isNullOrEmpty()) null
         else try {
             val uri = uriString.toUri()
-            val inputStream = context.contentResolver.openInputStream(uri)
-            BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+            // If it's a file URI, load it directly from the path to avoid permission issues
+            if (uri.scheme == "file") {
+                val path = uri.path
+                if (path != null) {
+                    BitmapFactory.decodeFile(path)?.asImageBitmap()
+                } else null
+            } else {
+                // For content:// or http://, use the content resolver
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+                }
+            }
         } catch (e: Exception) {
+            Log.e("DetailScreen", "Error loading image: $uriString", e)
             null
         }
     }
@@ -193,26 +267,6 @@ fun RecipeImageHeader(
                 Text("No photo added", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedButton(
-                onClick = onTakePhoto,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Take Photo")
-            }
-            OutlinedButton(
-                onClick = onPickPhoto,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Select Photo")
-            }
-        }
     }
 }
 
@@ -221,27 +275,23 @@ fun DisplayView(
     meal: MealUi,
     onEdit: () -> Unit,
     onShare: () -> Unit,
-    onTakePhoto: () -> Unit,
-    onPickPhoto: () -> Unit,
     onFavorite: () -> Unit
 ) {
     RecipeImageHeader(
-        uriString = meal.imageUri,
-        onTakePhoto = onTakePhoto,
-        onPickPhoto = onPickPhoto
+        uriString = meal.imageUri
     )
+    Spacer(Modifier.height(8.dp))
+    Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Text("Edit Recipe") }
+    Spacer(Modifier.height(4.dp))
+    Button(onClick = onShare, modifier = Modifier.fillMaxWidth()) { Text("Share Recipe") }
+    Spacer(Modifier.height(4.dp))
+    Button(onClick = onFavorite, modifier = Modifier.fillMaxWidth()) {
+        Text(if (meal.isFavorite) "Remove Favorite" else "Save Favorite")
+    }
 
     Spacer(Modifier.height(8.dp))
     Text(text = meal.name, style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(8.dp))
     Text(text = meal.instructions)
     Spacer(Modifier.height(16.dp))
-
-    Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Text("Edit Recipe") }
-    Spacer(Modifier.height(8.dp))
-    Button(onClick = onShare, modifier = Modifier.fillMaxWidth()) { Text("Share Recipe") }
-    Spacer(Modifier.height(8.dp))
-    Button(onClick = onFavorite, modifier = Modifier.fillMaxWidth()) {
-        Text(if (meal.isFavorite) "Remove Favorite" else "Save Favorite")
-    }
 }

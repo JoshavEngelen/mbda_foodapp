@@ -3,36 +3,32 @@ package com.example.foodapp.data
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.edit
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class EditMealManager(context: Context) {
 
     private val prefs = context.getSharedPreferences("edited_meals", Context.MODE_PRIVATE)
-    private var cachedEdits = prefs.all.filterValues { it is String } as Map<String, String>
+    
+    private val _editsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val editsChanged: SharedFlow<Unit> = _editsChanged.asSharedFlow()
 
-    fun saveEdit(id: String, name: String, instructions: String) {
+    fun saveEdit(id: String, name: String, instructions: String, uri: Uri?) {
+        val uriString = uri?.toString()
         prefs.edit {
             putString("${id}_name", name)
-                .putString("${id}_instructions", instructions)
+            putString("${id}_instructions", instructions)
+            if (uriString != null) {
+                putString("${id}_image", uriString)
+            } else {
+                remove("${id}_image")
+            }
         }
-
-        val newCache = cachedEdits.toMutableMap()
-        newCache["${id}_name"] = name
-        newCache["${id}_instructions"] = instructions
-        cachedEdits = newCache
+        _editsChanged.tryEmit(Unit)
     }
 
-    fun saveImage(id: String, uri: Uri) {
-        val uriString = uri.toString()
-        prefs.edit {
-            putString("${id}_image", uriString)
-        }
-
-        val newCache = cachedEdits.toMutableMap()
-        newCache["${id}_image"] = uriString
-        cachedEdits = newCache
-    }
-
-    fun getEditedName(id: String): String? = cachedEdits["${id}_name"]
-    fun getEditedInstructions(id: String): String? = cachedEdits["${id}_instructions"]
-    fun getEditedImage(id: String): String? = cachedEdits["${id}_image"]
+    fun getEditedName(id: String): String? = prefs.getString("${id}_name", null)
+    fun getEditedInstructions(id: String): String? = prefs.getString("${id}_instructions", null)
+    fun getEditedImage(id: String): String? = prefs.getString("${id}_image", null)
 }

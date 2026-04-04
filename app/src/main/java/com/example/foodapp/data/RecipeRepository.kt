@@ -1,11 +1,13 @@
 package com.example.foodapp.data
 
 import android.net.Uri
-import androidx.core.net.toUri
 import com.example.foodapp.api.ApiService
 import com.example.foodapp.api.MealUi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class RecipeRepository(
@@ -14,6 +16,7 @@ class RecipeRepository(
     private val editMealManager: EditMealManager
 ) {
     val favoritesFlow: StateFlow<Set<String>> = FavoritesManager.favoritesFlow
+    val editsChanged: Flow<Unit> = editMealManager.editsChanged
 
     suspend fun getMeals(): List<MealUi> = withContext(Dispatchers.IO) {
         val meals = apiService.fetchMeals()
@@ -34,8 +37,8 @@ class RecipeRepository(
         }
     }
 
-    suspend fun saveEdit(id: String, name: String, instructions: String) = withContext(Dispatchers.IO) {
-        editMealManager.saveEdit(id, name, instructions)
+    suspend fun saveEdit(id: String, name: String, instructions: String, uri: Uri?) = withContext(Dispatchers.IO) {
+        editMealManager.saveEdit(id, name, instructions, uri)
     }
 
     fun toggleFavorite(id: String) {
@@ -44,13 +47,5 @@ class RecipeRepository(
         } else {
             favoritesManager.addFavorite(id)
         }
-    }
-
-    fun saveImage(recipeId: String, uri: Uri) {
-        editMealManager.saveImage(recipeId, uri)
-    }
-
-    fun getImage(recipeId: String): Uri? {
-        return editMealManager.getEditedImage(recipeId)?.toUri()
     }
 }

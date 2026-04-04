@@ -35,20 +35,27 @@ class MealListViewModel(private val repository: RecipeRepository) : ViewModel() 
             combine(mealsFlow, repository.favoritesFlow) { meals, favorites ->
                 meals.map { it.copy(isFavorite = favorites.contains(it.id)) }
             }
-            .flowOn(Dispatchers.Default) // Perform mapping off the main thread
+            .flowOn(Dispatchers.Default)
             .collect { updatedMeals ->
                 if (uiState is UiState.Success || updatedMeals.isNotEmpty()) {
                     uiState = UiState.Success(updatedMeals)
                 }
             }
         }
-        // Initial fetch is handled here, so no need for LaunchedEffect(Unit) in the UI
+
+        // Refresh list when any edit happens
+        viewModelScope.launch {
+            repository.editsChanged.collect {
+                fetchMeals(force = true)
+            }
+        }
+
         fetchMeals()
     }
 
-    fun fetchMeals() {
+    fun fetchMeals(force: Boolean = false) {
         viewModelScope.launch {
-            if (mealsFlow.value.isNotEmpty()) return@launch // Avoid redundant fetches
+            if (mealsFlow.value.isNotEmpty() && !force) return@launch
 
             if (uiState !is UiState.Success) {
                 uiState = UiState.Loading
@@ -60,7 +67,9 @@ class MealListViewModel(private val repository: RecipeRepository) : ViewModel() 
                 }
                 mealsFlow.value = meals
             } catch (e: Exception) {
-                uiState = UiState.Error("Failed to load meals")
+                if (uiState !is UiState.Success) {
+                    uiState = UiState.Error("Failed to load meals")
+                }
             }
         }
     }

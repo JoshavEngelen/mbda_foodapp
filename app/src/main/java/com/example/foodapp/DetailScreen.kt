@@ -50,15 +50,15 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            when (val state = uiState) {
+            when (uiState) {
                 is DetailUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
-                is DetailUiState.Error -> Text(state.message)
+                is DetailUiState.Error -> Text(uiState.message)
                 is DetailUiState.Success -> {
-                    val meal = state.meal
+                    val meal = uiState.meal
                     if (viewModel.isEditing) {
                         EditView(viewModel)
                     } else {

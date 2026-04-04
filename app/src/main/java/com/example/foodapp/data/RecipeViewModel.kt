@@ -57,11 +57,6 @@ class RecipeViewModel(context: Context) : ViewModel() {
         }
     }
 
-    fun saveEdit(mealId: String, name: String, instructions: String) {
-        repository.saveEdit(mealId, name, instructions)
-        fetchMeals()
-    }
-
     fun toggleFavorite(mealId: String) {
         repository.toggleFavorite(mealId)
         fetchMeals()

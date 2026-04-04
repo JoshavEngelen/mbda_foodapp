@@ -31,8 +31,7 @@ class MainActivity : ComponentActivity() {
 fun FoodApp() {
     val navController = rememberNavController()
     val context = LocalContext.current
-    
-    // Create the ViewModel at this level so it's shared between screens
+
     val recipeViewModel: RecipeViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {

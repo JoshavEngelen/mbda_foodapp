@@ -6,12 +6,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.foodapp.api.MealUi
 import com.example.foodapp.data.RecipeViewModel
 import com.example.foodapp.data.UiState
-
-data class Recipe(val id: String, val name: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +29,7 @@ fun HomeScreen(viewModel: RecipeViewModel, onRecipeClick: (String) -> Unit) {
             is UiState.Loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = androidx.compose.ui.Alignment.Center
+                    contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
                 }
@@ -38,51 +38,60 @@ fun HomeScreen(viewModel: RecipeViewModel, onRecipeClick: (String) -> Unit) {
             is UiState.Error -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = androidx.compose.ui.Alignment.Center
+                    contentAlignment = Alignment.Center
                 ) {
                     Text("Error: ${state.message}")
                 }
             }
 
-            is UiState.Success ->
-                LazyColumn (
+            is UiState.Success -> {
+                LazyColumn(
                     modifier = Modifier
                         .padding(padding)
                         .fillMaxSize()
                 ) {
                     items(state.data) { meal ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onRecipeClick(meal.id) }
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(meal.name)
-
-                            Button(onClick = {
-                                viewModel.toggleFavorite(meal.id)
-                            }) {
-                                Text(if (meal.isFavorite) "★" else "☆")
-                            }
-                        }
+                        MealItem(
+                            meal = meal,
+                            onRecipeClick = onRecipeClick,
+                            onClick = { mealId -> viewModel.toggleFavorite(mealId) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
                     }
                 }
+            }
         }
     }
 }
 
 @Composable
-fun RecipeItem(recipe: Recipe, onClick: (String) -> Unit) {
+fun MealItem(
+    meal: MealUi,
+    onRecipeClick: (String) -> Unit,
+    onClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onClick(recipe.id) }
+        modifier = modifier.fillMaxWidth()
     ) {
-        Text(
-            text = recipe.name,
-            modifier = Modifier.padding(16.dp)
-        )
+        Row(
+            modifier = Modifier
+                .clickable { onRecipeClick(meal.id) }
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = meal.name,
+                modifier = Modifier.weight(1f)
+            )
+
+            IconButton(onClick = { onClick(meal.id) }) {
+                Text(
+                    text = if (meal.isFavorite) "★" else "☆",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+        }
     }
 }

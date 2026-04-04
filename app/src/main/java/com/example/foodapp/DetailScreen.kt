@@ -93,7 +93,7 @@ fun DetailScreen(recipeId: String, viewModel: RecipeViewModel, onBackClick: () -
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Naam") }
+                    label = { Text("Name") }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -101,7 +101,7 @@ fun DetailScreen(recipeId: String, viewModel: RecipeViewModel, onBackClick: () -
                 OutlinedTextField(
                     value = instructions,
                     onValueChange = { instructions = it },
-                    label = { Text("Instructies") }
+                    label = { Text("Instructions") }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -110,7 +110,7 @@ fun DetailScreen(recipeId: String, viewModel: RecipeViewModel, onBackClick: () -
                     viewModel.saveEdit(recipeId, name, instructions)
                     editMode = false
                 }) {
-                    Text("Opslaan")
+                    Text("Save")
                 }
 
             }
@@ -126,7 +126,7 @@ fun DetailScreen(recipeId: String, viewModel: RecipeViewModel, onBackClick: () -
                 Button(onClick = {
                     editMode = true
                 }) {
-                    Text("Bewerken")
+                    Text("Edit")
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

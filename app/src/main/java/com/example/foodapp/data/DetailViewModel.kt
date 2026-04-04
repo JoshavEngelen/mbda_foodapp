@@ -14,6 +14,8 @@ import com.example.foodapp.api.MealUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -41,38 +43,34 @@ class DetailViewModel(
 
     init {
         viewModelScope.launch {
-            combine(mealFlow, repository.favoritesFlow) { meal, favorites ->
-                meal?.copy(isFavorite = favorites.contains(meal?.id))
+            combine(mealFlow.filterNotNull(), repository.favoritesFlow) { meal, favorites ->
+                meal.copy(isFavorite = favorites.contains(meal.id))
             }.collect { updatedMeal ->
-                if (updatedMeal != null) {
-                    uiState = DetailUiState.Success(updatedMeal)
-                }
+                uiState = DetailUiState.Success(updatedMeal)
             }
         }
 
         viewModelScope.launch {
-            repository.editsChanged.collect {
-                loadMeal()
-            }
+            repository.editsChanged
+                .onStart { emit(Unit) }
+                .collect {
+                    refreshMealData()
+                }
         }
-
-        loadMeal()
     }
 
-    fun loadMeal() {
-        viewModelScope.launch {
-            try {
-                val meals = withContext(Dispatchers.IO) { repository.getMeals() }
-                val meal = meals.find { it.id == recipeId }
-                if (meal != null) {
-                    mealFlow.value = meal
-                } else if (uiState is DetailUiState.Loading) {
-                    uiState = DetailUiState.Error("Recipe not found")
-                }
-            } catch (e: Exception) {
-                if (uiState is DetailUiState.Loading) {
-                    uiState = DetailUiState.Error("Failed to load recipe")
-                }
+    private suspend fun refreshMealData() {
+        try {
+            val meals = withContext(Dispatchers.IO) { repository.getMeals() }
+            val meal = meals.find { it.id == recipeId }
+            if (meal != null) {
+                mealFlow.value = meal
+            } else if (uiState is DetailUiState.Loading) {
+                uiState = DetailUiState.Error("Recipe not found")
+            }
+        } catch (e: Exception) {
+            if (uiState is DetailUiState.Loading) {
+                uiState = DetailUiState.Error("Failed to load recipe")
             }
         }
     }
@@ -92,7 +90,6 @@ class DetailViewModel(
         val uri = editImageUri?.toUri()
         repository.saveEdit(recipeId, editName, editInstructions, uri)
         isEditing = false
-        // The repository.editsChanged flow will trigger loadMeal() automatically
     }
 
     fun toggleFavorite() {

@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -43,33 +44,30 @@ class MealListViewModel(private val repository: RecipeRepository) : ViewModel() 
             }
         }
 
-        // Refresh list when any edit happens
         viewModelScope.launch {
-            repository.editsChanged.collect {
-                fetchMeals(force = true)
-            }
+            repository.editsChanged
+                .onStart { 
+                    if (mealsFlow.value.isEmpty()) emit(Unit) 
+                }
+                .collect {
+                    refreshMealData()
+                }
         }
-
-        fetchMeals()
     }
 
-    fun fetchMeals(force: Boolean = false) {
-        viewModelScope.launch {
-            if (mealsFlow.value.isNotEmpty() && !force) return@launch
+    private suspend fun refreshMealData() {
+        if (uiState !is UiState.Success) {
+            uiState = UiState.Loading
+        }
 
-            if (uiState !is UiState.Success) {
-                uiState = UiState.Loading
+        try {
+            val meals = withContext(Dispatchers.IO) {
+                repository.getMeals()
             }
-
-            try {
-                val meals = withContext(Dispatchers.IO) {
-                    repository.getMeals()
-                }
-                mealsFlow.value = meals
-            } catch (e: Exception) {
-                if (uiState !is UiState.Success) {
-                    uiState = UiState.Error("Failed to load meals")
-                }
+            mealsFlow.value = meals
+        } catch (e: Exception) {
+            if (uiState !is UiState.Success) {
+                uiState = UiState.Error("Failed to load meals")
             }
         }
     }

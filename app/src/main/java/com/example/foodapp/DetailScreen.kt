@@ -1,12 +1,16 @@
 package com.example.foodapp
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -27,6 +32,8 @@ import com.example.foodapp.api.MealUi
 import com.example.foodapp.data.DetailUiState
 import com.example.foodapp.data.DetailViewModel
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +41,12 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
     val context = LocalContext.current
     val uiState = viewModel.uiState
 
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { }
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        bitmap?.let {
+            val uri = saveBitmapToUri(context, it, "recipe_photo_${System.currentTimeMillis()}.jpg")
+            viewModel.saveImage(uri)
+        }
+    }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) cameraLauncher.launch(null)
     }
@@ -67,7 +79,7 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
         ) {
             when (uiState) {
                 is DetailUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
@@ -106,6 +118,14 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
     }
 }
 
+private fun saveBitmapToUri(context: Context, bitmap: Bitmap, fileName: String): Uri {
+    val file = File(context.cacheDir, fileName)
+    FileOutputStream(file).use { out ->
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+    }
+    return file.toUri()
+}
+
 @Composable
 fun EditView(viewModel: DetailViewModel) {
     val scope = rememberCoroutineScope()
@@ -137,10 +157,15 @@ fun EditView(viewModel: DetailViewModel) {
 }
 
 @Composable
-fun RecipeImage(uriString: String) {
+fun RecipeImageHeader(
+    uriString: String?,
+    onTakePhoto: () -> Unit,
+    onPickPhoto: () -> Unit
+) {
     val context = LocalContext.current
     val bitmap = remember(uriString) {
-        try {
+        if (uriString == null) null
+        else try {
             val uri = uriString.toUri()
             val inputStream = context.contentResolver.openInputStream(uri)
             BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
@@ -149,16 +174,45 @@ fun RecipeImage(uriString: String) {
         }
     }
 
-    bitmap?.let {
-        Image(
-            bitmap = it,
-            contentDescription = "Recipe Image",
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
-                .padding(bottom = 16.dp),
-            contentScale = ContentScale.Crop
-        )
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = "Recipe Image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text("No photo added", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = onTakePhoto,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Take Photo")
+            }
+            OutlinedButton(
+                onClick = onPickPhoto,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Select Photo")
+            }
+        }
     }
 }
 
@@ -171,24 +225,23 @@ fun DisplayView(
     onPickPhoto: () -> Unit,
     onFavorite: () -> Unit
 ) {
-    meal.imageUri?.let { uriString ->
-        RecipeImage(uriString)
-    }
+    RecipeImageHeader(
+        uriString = meal.imageUri,
+        onTakePhoto = onTakePhoto,
+        onPickPhoto = onPickPhoto
+    )
 
+    Spacer(Modifier.height(8.dp))
     Text(text = meal.name, style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(8.dp))
     Text(text = meal.instructions)
     Spacer(Modifier.height(16.dp))
 
-    Button(onClick = onEdit) { Text("Edit") }
+    Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Text("Edit Recipe") }
     Spacer(Modifier.height(8.dp))
-    Button(onClick = onShare) { Text("Share Recipe") }
+    Button(onClick = onShare, modifier = Modifier.fillMaxWidth()) { Text("Share Recipe") }
     Spacer(Modifier.height(8.dp))
-    Button(onClick = onTakePhoto) { Text("Take Photo") }
-    Spacer(Modifier.height(8.dp))
-    Button(onClick = onPickPhoto) { Text("Select Photo") }
-    Spacer(Modifier.height(8.dp))
-    Button(onClick = onFavorite) {
+    Button(onClick = onFavorite, modifier = Modifier.fillMaxWidth()) {
         Text(if (meal.isFavorite) "Remove Favorite" else "Save Favorite")
     }
 }

@@ -82,8 +82,8 @@ class DetailViewModel(
 
     suspend fun saveChanges() {
         repository.saveEdit(recipeId, editName, editInstructions)
+        mealFlow.value = mealFlow.value?.copy(name = editName, instructions = editInstructions)
         isEditing = false
-        loadMeal()
     }
 
     fun toggleFavorite() {
@@ -92,7 +92,7 @@ class DetailViewModel(
 
     fun saveImage(uri: Uri) {
         repository.saveImage(recipeId, uri)
-        loadMeal()
+        mealFlow.value = mealFlow.value?.copy(imageUri = uri.toString())
     }
 
     companion object {

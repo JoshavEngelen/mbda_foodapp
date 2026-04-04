@@ -33,10 +33,6 @@ class RecipeRepository(
         editMealManager.saveEdit(id, name, instructions)
     }
 
-    fun getFavorites(): Set<String> {
-        return favoritesManager.getFavorites()
-    }
-
     fun toggleFavorite(id: String) {
         if (favoritesManager.isFavorite(id)) {
             favoritesManager.removeFavorite(id)

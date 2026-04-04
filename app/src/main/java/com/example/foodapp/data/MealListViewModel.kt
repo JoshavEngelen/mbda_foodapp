@@ -61,14 +61,13 @@ class MealListViewModel(context: Context) : ViewModel() {
                 }
                 mealsFlow.value = meals
             } catch (e: Exception) {
-                uiState = UiState.Error("Fout bij ophalen data")
+                uiState = UiState.Error("Failed to load meals")
             }
         }
     }
 
     fun toggleFavorite(mealId: String) {
         repository.toggleFavorite(mealId)
-        // No longer need to call fetchMeals() here!
     }
 
     companion object {

@@ -94,7 +94,6 @@ class DetailViewModel(
 
     fun toggleFavorite() {
         repository.toggleFavorite(recipeId)
-        // No longer need to call loadMeal() here!
     }
 
     companion object {

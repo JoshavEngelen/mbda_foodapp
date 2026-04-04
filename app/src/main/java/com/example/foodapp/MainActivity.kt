@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.foodapp.data.DetailViewModel
 import com.example.foodapp.data.RecipeViewModel
 import com.example.foodapp.ui.theme.FoodAppTheme
 
@@ -52,9 +53,13 @@ fun FoodApp() {
 
         composable("detail/{recipeId}") { backStackEntry ->
             val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
+
+            val detailViewModel: DetailViewModel = viewModel(
+                factory = DetailViewModel.provideFactory(recipeId, context)
+            )
+
             DetailScreen(
-                recipeId = recipeId,
-                viewModel = recipeViewModel,
+                viewModel = detailViewModel,
                 onBackClick = { navController.popBackStack() }
             )
         }

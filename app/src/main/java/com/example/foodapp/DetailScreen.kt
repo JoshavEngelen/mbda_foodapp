@@ -7,6 +7,8 @@ import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -81,6 +83,7 @@ fun DetailScreen(recipeId: String, viewModel: RecipeViewModel, onBackClick: () -
                 .padding(padding)
                 .padding(16.dp)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
 
             if (meal == null) {
@@ -93,7 +96,8 @@ fun DetailScreen(recipeId: String, viewModel: RecipeViewModel, onBackClick: () -
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") }
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -101,7 +105,8 @@ fun DetailScreen(recipeId: String, viewModel: RecipeViewModel, onBackClick: () -
                 OutlinedTextField(
                     value = instructions,
                     onValueChange = { instructions = it },
-                    label = { Text("Instructions") }
+                    label = { Text("Instructions") },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

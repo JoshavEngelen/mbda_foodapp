@@ -18,7 +18,7 @@ sealed class UiState {
     data class Error(val message: String) : UiState()
 }
 
-class RecipeViewModel(context: Context) : ViewModel() {
+class MealListViewModel(context: Context) : ViewModel() {
 
     private val repository = RecipeRepository(
         apiService = ApiService(),

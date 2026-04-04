@@ -10,14 +10,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.foodapp.api.MealUi
-import com.example.foodapp.data.RecipeViewModel
+import com.example.foodapp.data.MealListViewModel
 import com.example.foodapp.data.UiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: RecipeViewModel, onRecipeClick: (String) -> Unit) {
+fun HomeScreen(mealListViewModel: MealListViewModel, onRecipeClick: (String) -> Unit) {
     LaunchedEffect(Unit) {
-        viewModel.fetchMeals()
+        mealListViewModel.fetchMeals()
     }
 
     Scaffold (
@@ -25,7 +25,7 @@ fun HomeScreen(viewModel: RecipeViewModel, onRecipeClick: (String) -> Unit) {
             TopAppBar(title = { Text("FoodApp") })
         }
     ) { padding ->
-        when (val state = viewModel.uiState) {
+        when (val state = mealListViewModel.uiState) {
             is UiState.Loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -54,7 +54,7 @@ fun HomeScreen(viewModel: RecipeViewModel, onRecipeClick: (String) -> Unit) {
                         MealItem(
                             meal = meal,
                             onRecipeClick = onRecipeClick,
-                            onClick = { mealId -> viewModel.toggleFavorite(mealId) },
+                            onClick = { mealId -> mealListViewModel.toggleFavorite(mealId) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }

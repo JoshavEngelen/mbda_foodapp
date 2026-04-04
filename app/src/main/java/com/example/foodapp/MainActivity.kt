@@ -13,7 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.foodapp.data.DetailViewModel
-import com.example.foodapp.data.RecipeViewModel
+import com.example.foodapp.data.MealListViewModel
 import com.example.foodapp.ui.theme.FoodAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -33,10 +33,10 @@ fun FoodApp() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    val recipeViewModel: RecipeViewModel = viewModel(
+    val mealListViewModel: MealListViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return RecipeViewModel(context) as T
+                return MealListViewModel(context) as T
             }
         }
     )
@@ -44,7 +44,7 @@ fun FoodApp() {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
-                viewModel = recipeViewModel,
+                viewModel = mealListViewModel,
                 onRecipeClick = { recipeId ->
                     navController.navigate("detail/$recipeId")
                 }

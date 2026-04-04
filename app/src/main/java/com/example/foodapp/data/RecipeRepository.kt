@@ -1,14 +1,15 @@
 package com.example.foodapp.data
 
 import com.example.foodapp.api.ApiService
-import com.example.foodapp.api.Meal
 import com.example.foodapp.api.MealUi
+import kotlinx.coroutines.flow.StateFlow
 
 class RecipeRepository(
     private val apiService: ApiService,
     private val favoritesManager: FavoritesManager,
     private val editMealManager: EditMealManager
 ) {
+    val favoritesFlow: StateFlow<Set<String>> = FavoritesManager.favoritesFlow
 
     fun getMeals(): List<MealUi> {
         val meals = apiService.fetchMeals()

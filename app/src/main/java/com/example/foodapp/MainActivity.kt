@@ -34,17 +34,13 @@ fun FoodApp() {
     val context = LocalContext.current
 
     val mealListViewModel: MealListViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return MealListViewModel(context) as T
-            }
-        }
+        factory = MealListViewModel.provideFactory(context)
     )
 
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
-                viewModel = mealListViewModel,
+                mealListViewModel = mealListViewModel,
                 onRecipeClick = { recipeId ->
                     navController.navigate("detail/$recipeId")
                 }

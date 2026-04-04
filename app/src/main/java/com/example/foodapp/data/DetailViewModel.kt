@@ -12,6 +12,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.foodapp.api.ApiService
 import com.example.foodapp.api.MealUi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -32,6 +34,8 @@ class DetailViewModel(
         editMealManager = EditMealManager(context)
     )
 
+    private val mealFlow = MutableStateFlow<MealUi?>(null)
+
     var uiState: DetailUiState by mutableStateOf(DetailUiState.Loading)
         private set
     var isEditing by mutableStateOf(false)
@@ -41,17 +45,28 @@ class DetailViewModel(
     var editInstructions by mutableStateOf("")
 
     init {
+        viewModelScope.launch {
+            combine(mealFlow, repository.favoritesFlow) { meal, favorites ->
+                meal?.copy(isFavorite = favorites.contains(meal.id))
+            }.collect { updatedMeal ->
+                if (updatedMeal != null) {
+                    uiState = DetailUiState.Success(updatedMeal)
+                }
+            }
+        }
         loadMeal()
     }
 
     fun loadMeal() {
         viewModelScope.launch {
-            uiState = DetailUiState.Loading
+            if (uiState !is DetailUiState.Success) {
+                uiState = DetailUiState.Loading
+            }
             try {
                 val meals = withContext(Dispatchers.IO) { repository.getMeals() }
                 val meal = meals.find { it.id == recipeId }
                 if (meal != null) {
-                    uiState = DetailUiState.Success(meal)
+                    mealFlow.value = meal
                 } else {
                     uiState = DetailUiState.Error("Recipe not found")
                 }
@@ -79,7 +94,7 @@ class DetailViewModel(
 
     fun toggleFavorite() {
         repository.toggleFavorite(recipeId)
-        loadMeal()
+        // No longer need to call loadMeal() here!
     }
 
     companion object {

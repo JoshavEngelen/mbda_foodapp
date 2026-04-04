@@ -43,7 +43,8 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
     val context = LocalContext.current
     val uiState = viewModel.uiState
 
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicturePreview()) { bitmap ->
         bitmap?.let {
             val uri = saveBitmapToInternal(context, it)
             if (uri != null) {
@@ -51,20 +52,19 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
             }
         }
     }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) cameraLauncher.launch(null)
     }
-    
-    // Using modern PickVisualMedia for better reliability
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
+        ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         uri?.let {
             val internalUri = copyUriToInternal(context, it)
             if (internalUri != null) {
                 viewModel.editImageUri = internalUri.toString()
             } else {
-                // Fallback to original URI if copy fails, though not ideal for persistence
                 viewModel.editImageUri = it.toString()
             }
         }
@@ -73,7 +73,7 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Recipe Detail") },
+                title = { Text("Meal Detail") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -119,7 +119,7 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
                             onShare = {
                                 val intent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, "Check this recipe: ${meal.name}")
+                                    putExtra(Intent.EXTRA_TEXT, "Check this meal: ${meal.name}")
                                 }
                                 context.startActivity(Intent.createChooser(intent, "Share"))
                             },
@@ -134,7 +134,7 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
 
 private fun saveBitmapToInternal(context: Context, bitmap: Bitmap): Uri? {
     val dir = File(context.filesDir, "photos").apply { if (!exists()) mkdirs() }
-    val fileName = "recipe_photo_${System.currentTimeMillis()}.jpg"
+    val fileName = "meal_photo_${System.currentTimeMillis()}.jpg"
     val file = File(dir, fileName)
     return try {
         FileOutputStream(file).use { out ->
@@ -149,7 +149,7 @@ private fun saveBitmapToInternal(context: Context, bitmap: Bitmap): Uri? {
 
 private fun copyUriToInternal(context: Context, uri: Uri): Uri? {
     val dir = File(context.filesDir, "photos").apply { if (!exists()) mkdirs() }
-    val fileName = "recipe_photo_${System.currentTimeMillis()}.jpg"
+    val fileName = "meal_photo_${System.currentTimeMillis()}.jpg"
     val file = File(dir, fileName)
     return try {
         context.contentResolver.openInputStream(uri)?.use { input ->
@@ -172,7 +172,7 @@ fun EditView(
 ) {
     val scope = rememberCoroutineScope()
 
-    RecipeImageHeader(viewModel.editImageUri)
+    MealImageHeader(viewModel.editImageUri)
 
     Row(
         modifier = Modifier
@@ -222,7 +222,7 @@ fun EditView(
 }
 
 @Composable
-fun RecipeImageHeader(
+fun MealImageHeader(
     uriString: String?
 ) {
     val context = LocalContext.current
@@ -230,14 +230,12 @@ fun RecipeImageHeader(
         if (uriString.isNullOrEmpty()) null
         else try {
             val uri = uriString.toUri()
-            // If it's a file URI, load it directly from the path to avoid permission issues
             if (uri.scheme == "file") {
                 val path = uri.path
                 if (path != null) {
                     BitmapFactory.decodeFile(path)?.asImageBitmap()
                 } else null
             } else {
-                // For content:// or http://, use the content resolver
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
                 }
@@ -259,7 +257,7 @@ fun RecipeImageHeader(
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap,
-                    contentDescription = "Recipe Image",
+                    contentDescription = "Meal Image",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -277,13 +275,13 @@ fun DisplayView(
     onShare: () -> Unit,
     onFavorite: () -> Unit
 ) {
-    RecipeImageHeader(
+    MealImageHeader(
         uriString = meal.imageUri
     )
     Spacer(Modifier.height(8.dp))
-    Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Text("Edit Recipe") }
+    Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Text("Edit Meal") }
     Spacer(Modifier.height(4.dp))
-    Button(onClick = onShare, modifier = Modifier.fillMaxWidth()) { Text("Share Recipe") }
+    Button(onClick = onShare, modifier = Modifier.fillMaxWidth()) { Text("Share Meal") }
     Spacer(Modifier.height(4.dp))
     Button(onClick = onFavorite, modifier = Modifier.fillMaxWidth()) {
         Text(if (meal.isFavorite) "Remove Favorite" else "Save Favorite")

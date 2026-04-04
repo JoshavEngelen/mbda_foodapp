@@ -40,17 +40,17 @@ fun FoodApp() {
         composable("home") {
             HomeScreen(
                 mealListViewModel = mealListViewModel,
-                onRecipeClick = { recipeId ->
-                    navController.navigate("detail/$recipeId")
+                onMealClick = { mealId ->
+                    navController.navigate("detail/$mealId")
                 }
             )
         }
 
-        composable("detail/{recipeId}") { backStackEntry ->
-            val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
+        composable("detail/{mealId}") { backStackEntry ->
+            val mealId = backStackEntry.arguments?.getString("mealId") ?: ""
 
             val detailViewModel: DetailViewModel = viewModel(
-                factory = DetailViewModel.provideFactory(recipeId, application)
+                factory = DetailViewModel.provideFactory(mealId, application)
             )
 
             DetailScreen(

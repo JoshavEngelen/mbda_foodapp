@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 
-class RecipeRepository(
+class MealRepository(
     private val apiService: ApiService,
     private val favoritesManager: FavoritesManager,
     private val editMealManager: EditMealManager

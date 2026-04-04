@@ -26,8 +26,8 @@ sealed class DetailUiState {
 }
 
 class DetailViewModel(
-    private val recipeId: String,
-    private val repository: RecipeRepository
+    private val mealId: String,
+    private val repository: MealRepository
 ) : ViewModel() {
 
     private val mealFlow = MutableStateFlow<MealUi?>(null)
@@ -62,15 +62,15 @@ class DetailViewModel(
     private suspend fun refreshMealData() {
         try {
             val meals = withContext(Dispatchers.IO) { repository.getMeals() }
-            val meal = meals.find { it.id == recipeId }
+            val meal = meals.find { it.id == mealId }
             if (meal != null) {
                 mealFlow.value = meal
             } else if (uiState is DetailUiState.Loading) {
-                uiState = DetailUiState.Error("Recipe not found")
+                uiState = DetailUiState.Error("Meal not found")
             }
         } catch (e: Exception) {
             if (uiState is DetailUiState.Loading) {
-                uiState = DetailUiState.Error("Failed to load recipe")
+                uiState = DetailUiState.Error("Failed to load meal")
             }
         }
     }
@@ -88,18 +88,18 @@ class DetailViewModel(
 
     suspend fun saveChanges() {
         val uri = editImageUri?.toUri()
-        repository.saveEdit(recipeId, editName, editInstructions, uri)
+        repository.saveEdit(mealId, editName, editInstructions, uri)
         isEditing = false
     }
 
     fun toggleFavorite() {
-        repository.toggleFavorite(recipeId)
+        repository.toggleFavorite(mealId)
     }
 
     companion object {
-        fun provideFactory(recipeId: String, application: FoodApplication): ViewModelProvider.Factory = viewModelFactory {
+        fun provideFactory(mealId: String, application: FoodApplication): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                DetailViewModel(recipeId, application.recipeRepository)
+                DetailViewModel(mealId, application.mealRepository)
             }
         }
     }

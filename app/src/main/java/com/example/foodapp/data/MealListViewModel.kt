@@ -24,7 +24,7 @@ sealed class UiState {
     data class Error(val message: String) : UiState()
 }
 
-class MealListViewModel(private val repository: RecipeRepository) : ViewModel() {
+class MealListViewModel(private val repository: MealRepository) : ViewModel() {
 
     private val mealsFlow = MutableStateFlow<List<MealUi>>(emptyList())
 
@@ -79,7 +79,7 @@ class MealListViewModel(private val repository: RecipeRepository) : ViewModel() 
     companion object {
         fun provideFactory(application: FoodApplication): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                MealListViewModel(application.recipeRepository)
+                MealListViewModel(application.mealRepository)
             }
         }
     }

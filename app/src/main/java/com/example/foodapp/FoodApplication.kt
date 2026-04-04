@@ -4,11 +4,11 @@ import android.app.Application
 import com.example.foodapp.api.ApiService
 import com.example.foodapp.data.EditMealManager
 import com.example.foodapp.data.FavoritesManager
-import com.example.foodapp.data.RecipeRepository
+import com.example.foodapp.data.MealRepository
 
 class FoodApplication : Application() {
 
-    lateinit var recipeRepository: RecipeRepository
+    lateinit var mealRepository: MealRepository
         private set
 
     override fun onCreate() {
@@ -18,7 +18,7 @@ class FoodApplication : Application() {
         val favoritesManager = FavoritesManager(this)
         val editMealManager = EditMealManager(this)
 
-        recipeRepository = RecipeRepository(
+        mealRepository = MealRepository(
             apiService = apiService,
             favoritesManager = favoritesManager,
             editMealManager = editMealManager

@@ -15,7 +15,7 @@ import com.example.foodapp.data.UiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(mealListViewModel: MealListViewModel, onRecipeClick: (String) -> Unit) {
+fun HomeScreen(mealListViewModel: MealListViewModel, onMealClick: (String) -> Unit) {
 
     Scaffold (
         topBar = {
@@ -50,7 +50,7 @@ fun HomeScreen(mealListViewModel: MealListViewModel, onRecipeClick: (String) -> 
                     items(state.data) { meal ->
                         MealItem(
                             meal = meal,
-                            onRecipeClick = onRecipeClick,
+                            onMealClick = onMealClick,
                             onClick = { mealId -> mealListViewModel.toggleFavorite(mealId) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
@@ -64,7 +64,7 @@ fun HomeScreen(mealListViewModel: MealListViewModel, onRecipeClick: (String) -> 
 @Composable
 fun MealItem(
     meal: MealUi,
-    onRecipeClick: (String) -> Unit,
+    onMealClick: (String) -> Unit,
     onClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -73,7 +73,7 @@ fun MealItem(
     ) {
         Row(
             modifier = Modifier
-                .clickable { onRecipeClick(meal.id) }
+                .clickable { onMealClick(meal.id) }
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically

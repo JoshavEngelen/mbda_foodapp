@@ -1,0 +1,107 @@
+package com.example.foodapp.data
+
+import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.foodapp.api.ApiService
+import com.example.foodapp.api.MealUi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+sealed class DetailUiState {
+    object Loading : DetailUiState()
+    data class Success(val meal: MealUi) : DetailUiState()
+    data class Error(val message: String) : DetailUiState()
+}
+
+class DetailViewModel(
+    private val recipeId: String,
+    context: Context
+) : ViewModel() {
+
+    private val repository = RecipeRepository(
+        apiService = ApiService(),
+        favoritesManager = FavoritesManager(context),
+        editMealManager = EditMealManager(context)
+    )
+
+    private val mealFlow = MutableStateFlow<MealUi?>(null)
+
+    var uiState: DetailUiState by mutableStateOf(DetailUiState.Loading)
+        private set
+    var isEditing by mutableStateOf(false)
+        private set
+
+    var editName by mutableStateOf("")
+    var editInstructions by mutableStateOf("")
+
+    init {
+        viewModelScope.launch {
+            combine(mealFlow, repository.favoritesFlow) { meal, favorites ->
+                meal?.copy(isFavorite = favorites.contains(meal.id))
+            }.collect { updatedMeal ->
+                if (updatedMeal != null) {
+                    uiState = DetailUiState.Success(updatedMeal)
+                }
+            }
+        }
+        loadMeal()
+    }
+
+    fun loadMeal() {
+        viewModelScope.launch {
+            if (uiState !is DetailUiState.Success) {
+                uiState = DetailUiState.Loading
+            }
+            try {
+                val meals = withContext(Dispatchers.IO) { repository.getMeals() }
+                val meal = meals.find { it.id == recipeId }
+                if (meal != null) {
+                    mealFlow.value = meal
+                } else {
+                    uiState = DetailUiState.Error("Recipe not found")
+                }
+            } catch (e: Exception) {
+                uiState = DetailUiState.Error("Failed to load recipe")
+            }
+        }
+    }
+
+    fun startEditing(meal: MealUi) {
+        editName = meal.name
+        editInstructions = meal.instructions
+        isEditing = true
+    }
+
+    fun cancelEditing() {
+        isEditing = false
+    }
+
+    fun saveChanges() {
+        repository.saveEdit(recipeId, editName, editInstructions)
+        isEditing = false
+        loadMeal()
+    }
+
+    fun toggleFavorite() {
+        repository.toggleFavorite(recipeId)
+        // No longer need to call loadMeal() here!
+    }
+
+    companion object {
+        fun provideFactory(recipeId: String, context: Context): ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                DetailViewModel(recipeId, context)
+            }
+        }
+    }
+}

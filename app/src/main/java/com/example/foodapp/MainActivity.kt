@@ -4,25 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.foodapp.data.DetailViewModel
+import com.example.foodapp.data.MealListViewModel
 import com.example.foodapp.ui.theme.FoodAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -40,10 +31,16 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun FoodApp() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+
+    val mealListViewModel: MealListViewModel = viewModel(
+        factory = MealListViewModel.provideFactory(context)
+    )
 
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
+                mealListViewModel = mealListViewModel,
                 onRecipeClick = { recipeId ->
                     navController.navigate("detail/$recipeId")
                 }
@@ -52,7 +49,15 @@ fun FoodApp() {
 
         composable("detail/{recipeId}") { backStackEntry ->
             val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
-            DetailScreen(recipeId)
+
+            val detailViewModel: DetailViewModel = viewModel(
+                factory = DetailViewModel.provideFactory(recipeId, context)
+            )
+
+            DetailScreen(
+                viewModel = detailViewModel,
+                onBackClick = { navController.popBackStack() }
+            )
         }
     }
 }

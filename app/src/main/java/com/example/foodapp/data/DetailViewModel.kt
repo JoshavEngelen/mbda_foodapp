@@ -1,5 +1,6 @@
 package com.example.foodapp.data
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -87,6 +88,11 @@ class DetailViewModel(
 
     fun toggleFavorite() {
         repository.toggleFavorite(recipeId)
+    }
+
+    fun saveImage(uri: Uri) {
+        repository.saveImage(recipeId, uri)
+        loadMeal()
     }
 
     companion object {

@@ -1,5 +1,7 @@
 package com.example.foodapp.data
 
+import android.net.Uri
+import androidx.core.net.toUri
 import com.example.foodapp.api.ApiService
 import com.example.foodapp.api.MealUi
 import kotlinx.coroutines.Dispatchers
@@ -20,12 +22,14 @@ class RecipeRepository(
         meals.map { meal ->
             val editedName = editMealManager.getEditedName(meal.idMeal)
             val editedInstructions = editMealManager.getEditedInstructions(meal.idMeal)
+            val imageUri = editMealManager.getEditedImage(meal.idMeal)
 
             MealUi(
                 id = meal.idMeal,
                 name = editedName ?: meal.strMeal,
                 instructions = editedInstructions ?: meal.strInstructions,
-                isFavorite = favorites.contains(meal.idMeal)
+                isFavorite = favorites.contains(meal.idMeal),
+                imageUri = imageUri
             )
         }
     }
@@ -40,5 +44,13 @@ class RecipeRepository(
         } else {
             favoritesManager.addFavorite(id)
         }
+    }
+
+    fun saveImage(recipeId: String, uri: Uri) {
+        editMealManager.saveImage(recipeId, uri)
+    }
+
+    fun getImage(recipeId: String): Uri? {
+        return editMealManager.getEditedImage(recipeId)?.toUri()
     }
 }

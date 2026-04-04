@@ -3,9 +3,10 @@ package com.example.foodapp
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.launch
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,11 +14,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.example.foodapp.api.MealUi
 import com.example.foodapp.data.DetailUiState
 import com.example.foodapp.data.DetailViewModel
@@ -32,6 +37,13 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) cameraLauncher.launch(null)
+    }
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            viewModel.saveImage(it)
+        }
     }
 
     Scaffold(
@@ -82,6 +94,9 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
                                     permissionLauncher.launch(Manifest.permission.CAMERA)
                                 }
                             },
+                            onPickPhoto = {
+                                imagePickerLauncher.launch("image/*")
+                            },
                             onFavorite = { viewModel.toggleFavorite() }
                         )
                     }
@@ -122,13 +137,44 @@ fun EditView(viewModel: DetailViewModel) {
 }
 
 @Composable
+fun RecipeImage(uriString: String) {
+    val context = LocalContext.current
+    val bitmap = remember(uriString) {
+        try {
+            val uri = uriString.toUri()
+            val inputStream = context.contentResolver.openInputStream(uri)
+            BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    bitmap?.let {
+        Image(
+            bitmap = it,
+            contentDescription = "Recipe Image",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .padding(bottom = 16.dp),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+
+@Composable
 fun DisplayView(
     meal: MealUi,
     onEdit: () -> Unit,
     onShare: () -> Unit,
     onTakePhoto: () -> Unit,
+    onPickPhoto: () -> Unit,
     onFavorite: () -> Unit
 ) {
+    meal.imageUri?.let { uriString ->
+        RecipeImage(uriString)
+    }
+
     Text(text = meal.name, style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(8.dp))
     Text(text = meal.instructions)
@@ -139,6 +185,8 @@ fun DisplayView(
     Button(onClick = onShare) { Text("Share Recipe") }
     Spacer(Modifier.height(8.dp))
     Button(onClick = onTakePhoto) { Text("Take Photo") }
+    Spacer(Modifier.height(8.dp))
+    Button(onClick = onPickPhoto) { Text("Select Photo") }
     Spacer(Modifier.height(8.dp))
     Button(onClick = onFavorite) {
         Text(if (meal.isFavorite) "Remove Favorite" else "Save Favorite")

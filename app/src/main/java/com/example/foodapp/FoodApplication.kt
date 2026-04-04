@@ -14,7 +14,6 @@ class FoodApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Single instance of these across the whole app
         val apiService = ApiService()
         val favoritesManager = FavoritesManager(this)
         val editMealManager = EditMealManager(this)

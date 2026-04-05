@@ -117,11 +117,13 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
                             meal = meal,
                             onEdit = { viewModel.startEditing(meal) },
                             onShare = {
+                                val shareText = formatRecipeForSharing(meal)
                                 val intent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, "Check this meal: ${meal.name}")
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                    putExtra(Intent.EXTRA_SUBJECT, meal.name)
                                 }
-                                context.startActivity(Intent.createChooser(intent, "Share"))
+                                context.startActivity(Intent.createChooser(intent, "Share meal via"))
                             },
                             onFavorite = { viewModel.toggleFavorite() }
                         )
@@ -292,4 +294,15 @@ fun DisplayView(
     Spacer(Modifier.height(8.dp))
     Text(text = meal.instructions)
     Spacer(Modifier.height(16.dp))
+}
+
+fun formatRecipeForSharing(meal: MealUi): String {
+    return """🍽 Recipe: ${meal.name}
+
+📋 Instructions:
+${meal.instructions}
+
+🔗 Source:
+https://www.themealdb.com/meal/${meal.id}
+    """
 }

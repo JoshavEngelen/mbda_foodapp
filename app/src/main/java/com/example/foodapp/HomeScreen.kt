@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.example.foodapp.data.MealListViewModel
 import com.example.foodapp.data.UiState
 import com.example.foodapp.ui.MealItem
+import com.example.foodapp.ui.MealList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,26 +43,12 @@ fun HomeScreen(mealListViewModel: MealListViewModel, onMealClick: (String) -> Un
             }
 
             is UiState.Success -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize()
-                ) {
-                    items(state.data) { meal ->
-                        Card (
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .clickable { onMealClick(meal.id) }
-                        ) {
-                            MealItem(
-                                meal = meal,
-                                onFavoriteClick = { mealListViewModel.toggleFavorite(meal.id) },
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-                    }
-                }
+                MealList(
+                    state.data,
+                    onMealClick = onMealClick,
+                    onFavoriteClick = { mealListViewModel.toggleFavorite(it) },
+                    modifier = Modifier.padding(padding)
+                )
             }
         }
     }

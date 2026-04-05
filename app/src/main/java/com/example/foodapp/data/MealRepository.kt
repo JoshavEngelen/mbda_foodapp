@@ -19,17 +19,19 @@ class MealRepository(
     suspend fun getMeals(): List<MealUi> = withContext(Dispatchers.IO) {
         val meals = apiService.fetchMeals()
         val favorites = favoritesManager.getFavorites()
+        val allEdits = editMealManager.getAllEdits()
 
         meals.map { meal ->
-            val editedName = editMealManager.getEditedName(meal.idMeal)
-            val editedInstructions = editMealManager.getEditedInstructions(meal.idMeal)
-            val imageUri = editMealManager.getEditedImage(meal.idMeal)
+            val id = meal.idMeal
+            val editedName = allEdits["${id}_name"] as? String
+            val editedInstructions = allEdits["${id}_instructions"] as? String
+            val imageUri = allEdits["${id}_image"] as? String
 
             MealUi(
-                id = meal.idMeal,
+                id = id,
                 name = editedName ?: meal.strMeal,
                 instructions = editedInstructions ?: meal.strInstructions,
-                isFavorite = favorites.contains(meal.idMeal),
+                isFavorite = favorites.contains(id),
                 imageUri = imageUri ?: meal.strMealThumb
             )
         }

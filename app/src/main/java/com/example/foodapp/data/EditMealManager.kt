@@ -14,6 +14,10 @@ class EditMealManager(context: Context) {
     private val _editsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val editsChanged: SharedFlow<Unit> = _editsChanged.asSharedFlow()
 
+    fun getAllEdits(): Map<String, Any?> {
+        return prefs.all
+    }
+
     fun saveEdit(id: String, name: String, instructions: String, uri: Uri?) {
         val uriString = uri?.toString()
         prefs.edit {
@@ -27,8 +31,4 @@ class EditMealManager(context: Context) {
         }
         _editsChanged.tryEmit(Unit)
     }
-
-    fun getEditedName(id: String): String? = prefs.getString("${id}_name", null)
-    fun getEditedInstructions(id: String): String? = prefs.getString("${id}_instructions", null)
-    fun getEditedImage(id: String): String? = prefs.getString("${id}_image", null)
 }

@@ -40,8 +40,6 @@ fun MealImageHeader(
     
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .height(200.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {

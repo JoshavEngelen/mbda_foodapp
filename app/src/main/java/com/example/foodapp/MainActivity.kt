@@ -6,8 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -32,26 +30,27 @@ class MainActivity : ComponentActivity() {
 fun FoodApp() {
     val navController = rememberNavController()
     val context = LocalContext.current
+    val application = context.applicationContext as FoodApplication
 
     val mealListViewModel: MealListViewModel = viewModel(
-        factory = MealListViewModel.provideFactory(context)
+        factory = MealListViewModel.provideFactory(application)
     )
 
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
                 mealListViewModel = mealListViewModel,
-                onRecipeClick = { recipeId ->
-                    navController.navigate("detail/$recipeId")
+                onMealClick = { mealId ->
+                    navController.navigate("detail/$mealId")
                 }
             )
         }
 
-        composable("detail/{recipeId}") { backStackEntry ->
-            val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
+        composable("detail/{mealId}") { backStackEntry ->
+            val mealId = backStackEntry.arguments?.getString("mealId") ?: ""
 
             val detailViewModel: DetailViewModel = viewModel(
-                factory = DetailViewModel.provideFactory(recipeId, context)
+                factory = DetailViewModel.provideFactory(mealId, application)
             )
 
             DetailScreen(

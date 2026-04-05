@@ -22,7 +22,6 @@ import com.example.foodapp.data.DetailViewModel
 import com.example.foodapp.ui.DisplayView
 import com.example.foodapp.ui.EditView
 import com.example.foodapp.utils.ShareUtils
-import com.example.foodapp.utils.StorageUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,10 +32,7 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
     val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicturePreview()) { bitmap ->
         bitmap?.let {
-            val uri = StorageUtils.saveBitmapToInternal(context, it)
-            if (uri != null) {
-                viewModel.editImageUri = uri.toString()
-            }
+            viewModel.onBitmapCaptured(context, it)
         }
     }
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -48,12 +44,7 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         uri?.let {
-            val internalUri = StorageUtils.copyUriToInternal(context, it)
-            if (internalUri != null) {
-                viewModel.editImageUri = internalUri.toString()
-            } else {
-                viewModel.editImageUri = it.toString()
-            }
+            viewModel.onImagePicked(context, it)
         }
     }
 

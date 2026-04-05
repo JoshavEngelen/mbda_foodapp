@@ -1,5 +1,8 @@
 package com.example.foodapp.data
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,6 +14,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.foodapp.FoodApplication
 import com.example.foodapp.api.MealUi
+import com.example.foodapp.utils.StorageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -84,6 +88,26 @@ class DetailViewModel(
 
     fun cancelEditing() {
         isEditing = false
+    }
+
+    fun onImagePicked(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            val internalUri = withContext(Dispatchers.IO) {
+                StorageUtils.copyUriToInternal(context, uri)
+            }
+            editImageUri = internalUri?.toString() ?: uri.toString()
+        }
+    }
+
+    fun onBitmapCaptured(context: Context, bitmap: Bitmap) {
+        viewModelScope.launch {
+            val uri = withContext(Dispatchers.IO) {
+                StorageUtils.saveBitmapToInternal(context, bitmap)
+            }
+            if (uri != null) {
+                editImageUri = uri.toString()
+            }
+        }
     }
 
     suspend fun saveChanges() {

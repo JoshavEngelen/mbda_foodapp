@@ -30,7 +30,7 @@ class MealRepository(
                 name = editedName ?: meal.strMeal,
                 instructions = editedInstructions ?: meal.strInstructions,
                 isFavorite = favorites.contains(meal.idMeal),
-                imageUri = imageUri
+                imageUri = imageUri ?: meal.strMealThumb
             )
         }
     }

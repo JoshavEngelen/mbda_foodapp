@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 
 @Composable
 fun MealImageHeader(
@@ -61,14 +63,26 @@ private fun loadBitmap(context: Context, uriString: String?): Bitmap? {
     if (uriString.isNullOrEmpty()) return null
     return try {
         val uri = uriString.toUri()
-        if (uri.scheme == "file") {
-            val path = uri.path
-            if (path != null) {
-                BitmapFactory.decodeFile(path)
-            } else null
-        } else {
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                BitmapFactory.decodeStream(inputStream)
+        when (uri.scheme) {
+            "http", "https" -> {
+                val url = URL(uriString)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.doInput = true
+                connection.connect()
+                connection.inputStream.use { inputStream ->
+                    BitmapFactory.decodeStream(inputStream)
+                }
+            }
+            "file" -> {
+                val path = uri.path
+                if (path != null) {
+                    BitmapFactory.decodeFile(path)
+                } else null
+            }
+            else -> {
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    BitmapFactory.decodeStream(inputStream)
+                }
             }
         }
     } catch (e: Exception) {

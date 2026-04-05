@@ -27,12 +27,14 @@ class MealRepository(
             val editedInstructions = allEdits["${id}_instructions"] as? String
             val imageUri = allEdits["${id}_image"] as? String
 
+            val finalImageUri = imageUri?.takeIf { it.isNotBlank() } ?: meal.strMealThumb.takeIf { it.isNotBlank() }
+
             MealUi(
                 id = id,
-                name = editedName ?: meal.strMeal,
-                instructions = editedInstructions ?: meal.strInstructions,
+                name = editedName?.takeIf { it.isNotBlank() } ?: meal.strMeal,
+                instructions = editedInstructions?.takeIf { it.isNotBlank() } ?: meal.strInstructions,
                 isFavorite = favorites.contains(id),
-                imageUri = imageUri ?: meal.strMealThumb
+                imageUri = finalImageUri
             )
         }
     }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.foodapp.api.MealUi
@@ -19,10 +20,17 @@ fun MealList(
     onFavoriteClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val sortedMeals = remember(meals) {
+        meals.sortedWith(
+            compareByDescending<MealUi> { it.isFavorite }
+                .thenBy { it.name }
+        )
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxSize()
     ) {
-        items(meals) { meal ->
+        items(sortedMeals) { meal ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -2,10 +2,15 @@ package com.example.foodapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Healthy, Food-inspired Palette
+val SageGreen = Color(0xFF8BA888)
+val DeepOlive = Color(0xFF4A5D48)
+val WarmSand = Color(0xFFF2E8CF)
+val EarthyRed = Color(0xFFBC4749)
+val CreamWhite = Color(0xFFFFFBFE)
+val DarkCharcoal = Color(0xFF1C1B1F)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Dark Theme Variants
+val MutedSage = Color(0xFFA7C4A5)
+val SoftSand = Color(0xFFD9D0B8)
+val MutedRed = Color(0xFFE27274)

@@ -39,19 +39,19 @@ fun FoodApp() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home
+        startDestination = NavDestinations.Home
     ) {
-        composable<Screen.Home> {
+        composable<NavDestinations.Home> {
             HomeScreen(
                 mealListViewModel = mealListViewModel,
                 onMealClick = { mealId ->
-                    navController.navigate(Screen.Detail(mealId))
+                    navController.navigate(NavDestinations.Detail(mealId))
                 }
             )
         }
 
-        composable<Screen.Detail> { backStackEntry ->
-            val detailRoute: Screen.Detail = backStackEntry.toRoute()
+        composable<NavDestinations.Detail> { backStackEntry ->
+            val detailRoute: NavDestinations.Detail = backStackEntry.toRoute()
 
             val detailViewModel: DetailViewModel = viewModel(
                 factory = DetailViewModel.provideFactory(detailRoute.mealId, application)

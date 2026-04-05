@@ -1,7 +1,6 @@
 package com.example.foodapp
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -18,11 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.example.foodapp.api.MealUi
 import com.example.foodapp.data.DetailUiState
 import com.example.foodapp.data.DetailViewModel
 import com.example.foodapp.ui.DisplayView
 import com.example.foodapp.ui.EditView
+import com.example.foodapp.utils.ShareUtils
 import com.example.foodapp.utils.StorageUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,15 +103,7 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
                         DisplayView(
                             meal = meal,
                             onEdit = { viewModel.startEditing(meal) },
-                            onShare = {
-                                val shareText = formatRecipeForSharing(meal)
-                                val intent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                    putExtra(Intent.EXTRA_SUBJECT, meal.name)
-                                }
-                                context.startActivity(Intent.createChooser(intent, "Share meal via"))
-                            },
+                            onShare = { ShareUtils.shareMeal(context, meal) },
                             onFavorite = { viewModel.toggleFavorite() }
                         )
                     }
@@ -120,15 +111,4 @@ fun DetailScreen(viewModel: DetailViewModel, onBackClick: () -> Unit) {
             }
         }
     }
-}
-
-fun formatRecipeForSharing(meal: MealUi): String {
-    return """🍽 Recipe: ${meal.name}
-
-📋 Instructions:
-${meal.instructions}
-
-🔗 Source:
-https://www.themealdb.com/meal/${meal.id}
-    """
 }

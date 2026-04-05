@@ -1,5 +1,6 @@
 package com.example.foodapp
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -47,12 +48,18 @@ fun HomeScreen(mealListViewModel: MealListViewModel, onMealClick: (String) -> Un
                         .fillMaxSize()
                 ) {
                     items(state.data) { meal ->
-                        MealItem(
-                            meal = meal,
-                            onMealClick = onMealClick,
-                            onFavoriteClick = { mealId -> mealListViewModel.toggleFavorite(mealId) },
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
+                        Card (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clickable { onMealClick(meal.id) }
+                        ) {
+                            MealItem(
+                                meal = meal,
+                                onFavoriteClick = { mealListViewModel.toggleFavorite(meal.id) },
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
                     }
                 }
             }

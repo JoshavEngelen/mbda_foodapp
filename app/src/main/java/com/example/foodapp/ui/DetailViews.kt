@@ -88,22 +88,11 @@ fun DisplayView(
         uriString = meal.imageUri
     )
     Spacer(Modifier.height(8.dp))
-    
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = meal.name, 
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.weight(1f)
-        )
-        FavoriteButton(
-            isFavorite = meal.isFavorite,
-            onClick = onFavorite
-        )
-    }
+
+    MealItem(
+        meal = meal,
+        onFavoriteClick = onFavorite
+    )
     
     Spacer(Modifier.height(8.dp))
     Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Text("Edit Meal") }

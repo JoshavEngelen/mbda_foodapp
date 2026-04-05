@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.foodapp.data.DetailViewModel
 import com.example.foodapp.data.MealListViewModel
 import com.example.foodapp.ui.theme.FoodAppTheme
@@ -36,21 +37,24 @@ fun FoodApp() {
         factory = MealListViewModel.provideFactory(application)
     )
 
-    NavHost(navController = navController, startDestination = "home") {
-        composable("home") {
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Home
+    ) {
+        composable<Screen.Home> {
             HomeScreen(
                 mealListViewModel = mealListViewModel,
                 onMealClick = { mealId ->
-                    navController.navigate("detail/$mealId")
+                    navController.navigate(Screen.Detail(mealId))
                 }
             )
         }
 
-        composable("detail/{mealId}") { backStackEntry ->
-            val mealId = backStackEntry.arguments?.getString("mealId") ?: ""
+        composable<Screen.Detail> { backStackEntry ->
+            val detailRoute: Screen.Detail = backStackEntry.toRoute()
 
             val detailViewModel: DetailViewModel = viewModel(
-                factory = DetailViewModel.provideFactory(mealId, application)
+                factory = DetailViewModel.provideFactory(detailRoute.mealId, application)
             )
 
             DetailScreen(

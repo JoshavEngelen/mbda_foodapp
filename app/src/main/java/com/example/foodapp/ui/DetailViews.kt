@@ -88,17 +88,29 @@ fun DisplayView(
         uriString = meal.imageUri
     )
     Spacer(Modifier.height(8.dp))
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = meal.name, 
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.weight(1f)
+        )
+        FavoriteButton(
+            isFavorite = meal.isFavorite,
+            onClick = onFavorite
+        )
+    }
+    
+    Spacer(Modifier.height(8.dp))
     Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Text("Edit Meal") }
     Spacer(Modifier.height(4.dp))
     Button(onClick = onShare, modifier = Modifier.fillMaxWidth()) { Text("Share Meal") }
-    Spacer(Modifier.height(4.dp))
-    Button(onClick = onFavorite, modifier = Modifier.fillMaxWidth()) {
-        Text(if (meal.isFavorite) "Remove Favorite" else "Save Favorite")
-    }
 
-    Spacer(Modifier.height(8.dp))
-    Text(text = meal.name, style = MaterialTheme.typography.headlineSmall)
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(16.dp))
     Text(text = meal.instructions)
     Spacer(Modifier.height(16.dp))
 }
@@ -108,25 +120,7 @@ fun MealImageHeader(
     uriString: String?
 ) {
     val context = LocalContext.current
-    val bitmap = remember(uriString) {
-        if (uriString.isNullOrEmpty()) null
-        else try {
-            val uri = uriString.toUri()
-            if (uri.scheme == "file") {
-                val path = uri.path
-                if (path != null) {
-                    BitmapFactory.decodeFile(path)?.asImageBitmap()
-                } else null
-            } else {
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("DetailViews", "Error loading image: $uriString", e)
-            null
-        }
-    }
+    val bitmap = intermediateBitmap(uriString, context)
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Box(
@@ -149,3 +143,25 @@ fun MealImageHeader(
         }
     }
 }
+
+@Composable
+private fun intermediateBitmap(uriString: String?, context: android.content.Context) =
+    remember(uriString) {
+        if (uriString.isNullOrEmpty()) null
+        else try {
+            val uri = uriString.toUri()
+            if (uri.scheme == "file") {
+                val path = uri.path
+                if (path != null) {
+                    BitmapFactory.decodeFile(path)?.asImageBitmap()
+                } else null
+            } else {
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("DetailViews", "Error loading image: $uriString", e)
+            null
+        }
+    }

@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.example.foodapp.api.MealUi
 import com.example.foodapp.data.MealListViewModel
 import com.example.foodapp.data.UiState
+import com.example.foodapp.ui.FavoriteButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +52,7 @@ fun HomeScreen(mealListViewModel: MealListViewModel, onMealClick: (String) -> Un
                         MealItem(
                             meal = meal,
                             onMealClick = onMealClick,
-                            onClick = { mealId -> mealListViewModel.toggleFavorite(mealId) },
+                            onFavoriteClick = { mealId -> mealListViewModel.toggleFavorite(mealId) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
@@ -65,7 +66,7 @@ fun HomeScreen(mealListViewModel: MealListViewModel, onMealClick: (String) -> Un
 fun MealItem(
     meal: MealUi,
     onMealClick: (String) -> Unit,
-    onClick: (String) -> Unit,
+    onFavoriteClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -83,12 +84,10 @@ fun MealItem(
                 modifier = Modifier.weight(1f)
             )
 
-            IconButton(onClick = { onClick(meal.id) }) {
-                Text(
-                    text = if (meal.isFavorite) "★" else "☆",
-                    style = MaterialTheme.typography.headlineSmall
-                )
-            }
+            FavoriteButton(
+                isFavorite = meal.isFavorite,
+                onClick = { onFavoriteClick(meal.id) }
+            )
         }
     }
 }
